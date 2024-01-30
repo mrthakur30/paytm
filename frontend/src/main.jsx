@@ -5,6 +5,7 @@ import SignIn from './components/SignIn.jsx';
 import SignUp from './components/SignUp.jsx';
 import Dashboard from './components/Dashboard.jsx' ;
 import { createBrowserRouter,RouterProvider} from "react-router-dom";
+import Send from './components/Send.jsx';
 
 const router = createBrowserRouter([
   {
@@ -20,9 +21,13 @@ const router = createBrowserRouter([
     element: <SignUp />,
   },
   {
-    path: "/dashbaord",
+    path: "/dashboard",
     element : <Dashboard />
-  }
+  },
+  {
+    path: "/send",
+    element : <Send />
+  },
 ]);
 
 ReactDOM.createRoot(document.getElementById('root')).render(

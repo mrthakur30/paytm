@@ -1,6 +1,4 @@
 const jwt = require('jsonwebtoken');
-const {JWT_SECRET} = "mukul";
-
 const authMiddleware = (req, res, next) =>{
     const authHeader = req.headers.authorization;
     

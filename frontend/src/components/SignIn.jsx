@@ -1,20 +1,24 @@
 import { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const SignIn = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
   const submitHandler = async (e) => {
     e.preventDefault();
-    await axios.post('http://localhost:8080/api/v1/signin', {
+
+    await axios.post('http://localhost:8080/api/v1/user/signin', {
       username: username,
       password: password
     }, {
       headers: { 'Content-Type': 'application/json' }
     })
       .then(response => {
-        console.log(response);
+         window.localStorage.setItem('muku-pay-token', response.data.token);
+         navigate('/dashboard');
       })
       .catch(error => {
         console.log(error);

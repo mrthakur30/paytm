@@ -73,7 +73,6 @@ router.post('/check-username', async (req, res) => {
     res.json({ available: !existingUser });
 });
 
-
 router.post('/signin', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -104,7 +103,6 @@ router.post('/signin', async (req, res) => {
     }
 });
 
-
 router.get('/bulk', authMiddleware, async (req, res) => {
     try {
         const data = await User.find({},{password: 0});
@@ -126,7 +124,6 @@ router.put('/', authMiddleware, async (req, res) => {
         const encryptedPassword = await bcrypt.hash(password, saltRounds);
         
         const result = await User.updateOne({ _id: req.userId }, { $set: { firstName : firstname, lastName : lastname, password: encryptedPassword }  })
-        
         
         if (result.modifiedCount === 1) {
             res.json({ message: "User Updated" });

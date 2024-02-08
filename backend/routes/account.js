@@ -1,8 +1,9 @@
 const { Router } = require('express')
 const router = Router();
-const { User, Account } = require('../config/db')
-const { authMiddleware } = require('../middlewares/userMiddleware')
-const mongoose = require('mongoose');
+const { authMiddleware } = require('../middlewares/authMiddleware')
+const { Prisma, PrismaClient } = require('@prisma/client')
+
+const prisma = new PrismaClient()
 
 function handleServerError(res, error) {
     console.error(error);
@@ -13,10 +14,14 @@ router.get('/', (req, res) => {
     res.send("Working....")
 })
 
-router.get('/balance', authMiddleware, async (req, res) => {
+router.get('/user', authMiddleware, async (req, res) => {
     try {
-        const account = await Account.findOne({ userId: req.userId });
-        res.status(200).json({ balance: account.balance });
+        const account = await prisma.account.findFirst({
+            where: {
+                user_id: req.userId
+            }
+        })
+        res.status(200).json({ account : account });
     } catch (error) {
         handleServerError(res, error);
     }
@@ -24,32 +29,63 @@ router.get('/balance', authMiddleware, async (req, res) => {
 
 router.post('/transfer', authMiddleware, async (req, res) => {
     try {
-        const session = await mongoose.startSession();
 
-        session.startTransaction();
-        const { amount , to } = req.body;
-        const account = await Account.findOne({ userId: req.userId }).session(session);
+        const { amount, to } = req.body;
 
-        if (!account || account.balance < amount) {
-            await session.abortTransaction();
+        const fromAccount = await prisma.account.findFirst({
+            where: {
+                user_id: req.userId
+            }
+        })
+
+        if (fromAccount.balance < amount) {
             return res.status(400).json({
                 message: "Insufficient balance"
             });
         }
 
-        const toAccount = await Account.findOne({ userId: to }).session(session);
+        const toAccount = await prisma.account.findFirst({
+            where: {
+                user_id: to
+            }
+        })
+
+        console.log('====================================');
+        console.log(fromAccount.id+"to" +toAccount.id + amount );
+        console.log('====================================');
 
         if (!toAccount) {
-            await session.abortTransaction();
             return res.status(400).json({
                 message: "Invalid account"
             });
         }
 
-        await Account.updateOne({ userId: req.userId }, { $inc: { balance: -amount } }).session(session);
-        await Account.updateOne({ userId: to }, { $inc: { balance: amount } }).session(session);
+        await prisma.$transaction([
+            prisma.account.update({
+                where: {
+                    id: fromAccount.id
+                },
+                data: {
+                    balance: {
+                        decrement: parseInt(amount)
+                    }
+                }
+            }),
+            prisma.account.update({
+                where: {
+                    id: toAccount.id
+                },
+                data: {
+                    balance: {
+                        increment: parseInt(amount)
+                    }
+                }
+            })
+        ],
+            {
+                isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+            })
 
-        await session.commitTransaction();
         res.status(200).json({ message: "Transaction successful" })
     } catch (error) {
         handleServerError(res, error);

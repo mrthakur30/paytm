@@ -1,11 +1,13 @@
 const { Router } = require('express')
-const { User, Account } = require('../config/db')
 const router = Router();
 const jwt = require('jsonwebtoken');
-const zod = require('zod')
-const { authMiddleware } = require('../middlewares/userMiddleware')
+const { authMiddleware } = require('../middlewares/authMiddleware')
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
+const { PrismaClient } = require('@prisma/client')
+
+const prisma = new PrismaClient()
+
 
 function handleServerError(res, error) {
     console.error(error);
@@ -23,37 +25,50 @@ router.post('/signup', async (req, res) => {
 
         if (!firstname || !lastname || !username || !password) {
             res.status(404).json({ message: "Missing Credentails" });
+            return;
         }
 
-        const user = await User.findOne({ username: username });
 
-        if (user) {
-            res.status(404).json({ message: "username already exist" });
-        }
+        // const user = prisma.user.aggregate({
+        //     where: {
+        //         username: username
+        //     }
+        // })
+
+        // console.log('====================================');
+        // console.log(user);
+        // console.log('====================================');
+
+        // if (user) {
+        //     res.status(404).json({ message: "username already exist" });
+        //     return;
+        // }
 
         const encryptedPassword = await bcrypt.hash(password, saltRounds);
 
-        const newUser = new User({
-            username: username,
-            firstName: firstname,
-            lastName: lastname,
-            password: encryptedPassword
+        const newUser = await prisma.user.create({
+            data: {
+                username: username,
+                firstName: firstname,
+                lastName: lastname,
+                password: encryptedPassword
+            },
         })
 
-        await newUser.save();
+        const userId = newUser.id;
 
-        const userId = newUser._id;
-
-        await Account.create({
-            userId,
-            balance: 1 + Math.random() * 10000
+        await prisma.account.create({
+            data: {
+                user_id: userId,
+                balance: 1 + parseInt(Math.random() * 10000)
+            }
         })
 
         const token = jwt.sign({
             userId
         }, process.env.JWT_KEY);
-
-        res.json({
+        
+        res.status(200).json({
             message: "User created successfully",
             token: token
         })
@@ -69,7 +84,12 @@ router.post('/check-username', async (req, res) => {
         return res.status(400).json({ error: 'Username is required' });
     }
 
-    const existingUser = await User.findOne({ username });
+    const existingUser = await prisma.user.findFirst({
+        where: {
+            username: username
+        }
+    });
+
     res.json({ available: !existingUser });
 });
 
@@ -81,7 +101,11 @@ router.post('/signin', async (req, res) => {
             return res.status(400).json({ message: "Missing Credentials" });
         }
 
-        const user = await User.findOne({ username: username });
+        const user = await prisma.user.findFirst({
+            where: {
+                username: username
+            }
+        })
 
         if (!user) {
             return res.status(404).json({ message: "Username doesn't exist" });
@@ -93,11 +117,9 @@ router.post('/signin', async (req, res) => {
             return res.status(401).json({ message: "Wrong password" });
         }
 
-        const token = jwt.sign({userId : user._id}, process.env.JWT_KEY, { expiresIn: '1h' });
-        user.token = token;
-        await user.save();
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_KEY, { expiresIn: '1h' });
 
-        res.status(200).json({ token: user.token });
+        res.status(200).json({ token: token });
     } catch (error) {
         handleServerError(res, error);
     }
@@ -105,7 +127,17 @@ router.post('/signin', async (req, res) => {
 
 router.get('/bulk', authMiddleware, async (req, res) => {
     try {
-        const data = await User.find({},{password: 0});
+        const data = await prisma.user.findMany({
+            where: {},
+            select: {
+                id: true,
+                username: true,
+                firstName: true,
+                lastName: true,
+                password: false
+            }
+        })
+
         res.status(200).json({ data });
     } catch (error) {
         handleServerError(res, error);
@@ -113,8 +145,8 @@ router.get('/bulk', authMiddleware, async (req, res) => {
 });
 
 router.put('/', authMiddleware, async (req, res) => {
-    try{
-        
+    try {
+
         const { firstname, lastname, password } = req.body;
 
         if (!firstname || !lastname || !password) {
@@ -122,9 +154,20 @@ router.put('/', authMiddleware, async (req, res) => {
         }
 
         const encryptedPassword = await bcrypt.hash(password, saltRounds);
-        
-        const result = await User.updateOne({ _id: req.userId }, { $set: { firstName : firstname, lastName : lastname, password: encryptedPassword }  })
-        
+
+        const result = await prisma.updateOne({
+            where: {
+                id: req.userId
+            },
+            data: {
+                firstName: firstname,
+                lastName: lastname,
+                password: encryptedPassword
+            }
+        })
+
+        console.log(result);
+
         if (result.modifiedCount === 1) {
             res.json({ message: "User Updated" });
         } else {

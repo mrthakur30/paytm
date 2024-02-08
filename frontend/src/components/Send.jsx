@@ -6,6 +6,9 @@ const Send = () => {
     let {state} = useLocation();
     const [amount,setAmount] = useState(0);
     const navigate = useNavigate();
+    console.log('====================================');
+    console.log(state.key);
+    console.log('====================================');
     const tansferMoneyHandler = async ()=>{
         await axios.post('http://localhost:8080/api/v1/account/transfer', {
             amount : amount, to : state.key

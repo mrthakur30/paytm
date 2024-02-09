@@ -5,7 +5,7 @@ const app = express()
 const rootRouter = require("./routes/root");
 require('dotenv').config()
 
-app.use(cors())
+app.use(cors({origin : 'https://main--frolicking-dolphin-f0f06c.netlify.app'}))
 const PORT = process.env.PORT || 8080 ;
 
 app.use(bodyParser.json());

@@ -20,7 +20,7 @@ app.use(express.json());
 
 
 
-app.use("/api/v1", , rootRouter);
+app.use("/api/v1", rootRouter);
 
 app.listen(PORT, () => {
    console.log("Listening on port", PORT);

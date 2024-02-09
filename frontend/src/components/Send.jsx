@@ -1,27 +1,18 @@
 import { useState } from "react"
 import axios from "axios";
 import { useNavigate , useLocation } from "react-router-dom";
-import 'dotenv/config'
-
 
 const Send = () => {
     let {state} = useLocation();
     const [amount,setAmount] = useState(0);
     const navigate = useNavigate();
-    console.log('====================================');
-    console.log(state.key);
-    console.log('====================================');
     const tansferMoneyHandler = async ()=>{
-        await axios.post(`${process.env.BACKEND_URL+'/api/v1/account/transfer'}`, {
+        await axios.post(`${import.meta.env.BACKEND_URL+'/api/v1/account/transfer'}`, {
             amount : amount, to : state.key
           }, {
             headers: { Authorization: `Bearer ${window.localStorage.getItem('muku-pay-token')}` }
           })
-          
             .then(response => {
-                console.log('====================================');
-                console.log(response);
-                console.log('====================================');
                navigate('/dashboard');
             })
             .catch(error => {

@@ -6,8 +6,6 @@ import SignUp from './components/SignUp.jsx';
 import Dashboard from './components/Dashboard.jsx' ;
 import { createBrowserRouter,RouterProvider} from "react-router-dom";
 import Send from './components/Send.jsx';
-import dotenv from 'dotenv';
-dotenv.config();
 
 const router = createBrowserRouter([
   {

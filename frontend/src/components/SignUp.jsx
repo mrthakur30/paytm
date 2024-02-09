@@ -14,7 +14,7 @@ const SignUp = () => {
 
   const submitHandler = (e) => {
     e.preventDefault();
-    axios.post(`${process.env.BACKEND_URL +'/api/v1/user/signup'}`, {
+    axios.post(`${import.meta.env.BACKEND_URL +'/api/v1/user/signup'}`, {
       firstname: firstName,
       lastname: lastName,
       username: username,

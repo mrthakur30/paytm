@@ -10,12 +10,12 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userBulkResponse = await axios.get(`${process.env.BACKEND_URL+'http://localhost:8080/api/v1/user/bulk'}`, {
+        const userBulkResponse = await axios.get(`${import.meta.env.BACKEND_URL+'/api/v1/user/bulk'}`, {
           headers: { Authorization: `Bearer ${window.localStorage.getItem('muku-pay-token')}` }
         });
 
 
-        const accountResponse = await axios.get(`${process.env.BACKEND_URL+'http://localhost:8080/api/v1/account/user'}`, {
+        const accountResponse = await axios.get(`${import.meta.env.BACKEND_URL+'/api/v1/account/user'}`, {
           headers: { Authorization: `Bearer ${window.localStorage.getItem('muku-pay-token')}` }
         });
 

@@ -10,7 +10,7 @@ const SignIn = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    axios.post(`${process.env.BACKEND_URL +'/api/v1/user/signin'}`, {
+    axios.post(`${import.meta.env.BACKEND_URL +'/api/v1/user/signin'}`, {
       username: username,
       password: password
     }, {

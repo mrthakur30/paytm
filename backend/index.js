@@ -14,7 +14,6 @@ app.all('*', function (req, res) {
    res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
 });
 
-app.use();
 app.use(bodyParser.json());
 app.use(express.json());
 
